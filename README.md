@@ -159,7 +159,7 @@ class Section extends Model
 You might know the instance primary key beforehand and specify it in the source context. But you can also assign an instance dynamically:
 ```php
 $content = new Content(['name' => 'Sushi']);
-Section::setSushiContext('instance', $content);
+Section::setSushiContext('model', $content);
 ```
 
 Context options:
