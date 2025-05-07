@@ -1,0 +1,21 @@
+{
+    "name": "wilsonseixo/sushi-sources",
+    "description": "An overkill use of Laravel Sushi",
+    "authors": [
+        {
+            "name": "Wilson Ferreira",
+            "email": "wilson.seixo@gmail.com"
+        }
+    ],
+    "require": {
+        "calebporzio/sushi": "^2.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "SushiSources\\": "src/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
