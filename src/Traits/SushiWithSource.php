@@ -579,8 +579,6 @@ trait SushiWithSource
         $keyName = $model->getKeyName();
         $keyValue = $model->{$keyName} ?? null; // TODO: check if the method getKey() can be used here
 
-        dump($action, $model);
-
         if (
             (!$model->exists || $model->getRawOriginal($keyName) !== $keyValue)
             && static::where($keyName, $keyValue)->exists()
