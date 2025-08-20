@@ -162,7 +162,7 @@ trait SushiWithSource
         if( !is_bool($index) )
             throw new Exception("Model with key '$keyValue' already exists");
 
-        $rows->push($model->toArray());
+        $rows->push(static::safeInboundAttributesFromModel($model));
 
         $model->sushiSource()->write($model->formatRowsForSource($rows));
         if( $model->shouldPersist() )
@@ -197,7 +197,7 @@ trait SushiWithSource
                 throw new Exception("Model with key '{$model->{$keyName}}' already exists (new key is duplicate)");
         }
 
-        $rows->put($index, $model->attributesToArray());
+        $rows->put($index, static::safeInboundAttributesFromModel($model));
 
         $model->sushiSource()->write($model->formatRowsForSource($rows));
         if( $model->shouldPersist() )
@@ -253,6 +253,23 @@ trait SushiWithSource
             return [];
 
         return static::setRowsCache(static::formatRowsForSushi($rows));
+    }
+
+    /**
+     * Retrieves a model inbound-cast attributes safely.
+     *
+     * @param Model $model
+     * @return array
+     */
+    public static function safeInboundAttributesFromModel(Model $model): array
+    {
+        // attributes as they come from the DB
+        $inboundCastAttributes = $model->getAttributes();
+        // attributes after casts are applied (and Model validations)
+        $outboundCastAttributes = $model->attributesToArray();
+
+        // inbound attributes which keys exist in the outbound attributes
+        return array_intersect_key($inboundCastAttributes, array_flip(array_keys($outboundCastAttributes)));
     }
 
     protected static function setRowsCache(array $rows): array
