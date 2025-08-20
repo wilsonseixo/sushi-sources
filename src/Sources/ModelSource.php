@@ -2,6 +2,8 @@
 
 namespace SushiSources\Sources;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class ModelSource extends Source
@@ -59,20 +61,28 @@ class ModelSource extends Source
     {
         // validate model class
         $class = $this->context('class');
-        if( !class_exists($class) || !is_subclass_of($class, Model::class) )
+        if (!class_exists($class) || !is_subclass_of($class, Model::class))
             return null;
 
         // when a key is provided, we attempt to find it
         $key = $this->context('key');
-        if( !empty($key) )
+        if (!empty($key))
             return $class::find($key);
 
         // when the query is provided, we attempt to fetch it
         $query = $this->context('query');
-        if( !empty($query) && is_array($query) )
-            return collect($query)
-                ->reduce(fn($builder, $args, $method) => $builder->{$method}(...$args), $class::query())
-                ->first();
+        $query = $this->context('query');
+        if (!empty($query) && is_array($query)) {
+            $builderResult = collect($query)
+                ->reduce(fn($builder, $args, $method) => $builder->{$method}(...$args), $class::query());
+
+            return match (get_class($builderResult)) {
+                Collection::class => $builderResult->first(),
+                Builder::class => $builderResult->first(),
+                $class => $builderResult,
+                default => null
+            };
+        }
 
         return null;
     }
@@ -83,10 +93,10 @@ class ModelSource extends Source
      * @param Model|null $model
      * @return array
      */
-    public function getModelPropertyRows(?Model $model = null) : array
+    public function getModelPropertyRows(?Model $model = null): array
     {
         $property = $this->context('property');
-        if( !is_string($property) || empty($property) )
+        if (!is_string($property) || empty($property))
             return [];
 
         return (array)data_get($model ?? $this->model(), $property);
@@ -98,14 +108,14 @@ class ModelSource extends Source
      * @param array|null $rows The data to be set.
      * @return void
      */
-    public function setModelPropertyRows(?array $rows = []) : void
+    public function setModelPropertyRows(?array $rows = []): void
     {
         [$column, $path] = $this->parseModelProperty($this->context('property'));
-        if( empty($column) )
+        if (empty($column))
             return;
 
         $model = $this->model();
-        if( empty($model) )
+        if (empty($model))
             return;
 
         $columnData = $model->{$column};
@@ -118,7 +128,7 @@ class ModelSource extends Source
      * @param string $property
      * @return array<string, string> [$column, $path]
      */
-    public function parseModelProperty(string $property) : array
+    public function parseModelProperty(string $property): array
     {
         $parts = explode('.', $property);
 
