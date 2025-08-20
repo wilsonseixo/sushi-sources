@@ -59,6 +59,8 @@ class ModelSource extends Source
      */
     public function fetchModel(): ?Model
     {
+        $options = $this->context('options');
+
         // validate model class
         $class = $this->context('class');
         if (!class_exists($class) || !is_subclass_of($class, Model::class))
@@ -66,11 +68,16 @@ class ModelSource extends Source
 
         // when a key is provided, we attempt to find it
         $key = $this->context('key');
-        if (!empty($key))
-            return $class::find($key);
+        if (!empty($key)) {
+            return data_get($options, 'create_inexistent_key') === true
+                ? $class::firstOrNew(
+                    [app($class)?->getKeyName() => $key, ...($this->context('attributes') ?? [])],
+                    $this->context('values') ?? []
+                )
+                : $class::find($key);
+        }
 
         // when the query is provided, we attempt to fetch it
-        $query = $this->context('query');
         $query = $this->context('query');
         if (!empty($query) && is_array($query)) {
             $builderResult = collect($query)
